@@ -31,7 +31,7 @@ void close_lexer() {
 }
 
 token_t *get_next_token() {
-  int state = 0; // Estado inicial do DFA
+  int state = 0; // DFA initial state
   int c;
   char lexeme[LEXEME_MAX_SIZE] = {0};
   int lexeme_index = 0;
@@ -40,22 +40,22 @@ token_t *get_next_token() {
     c = get_next_char();
 
     if (c == EOF) {
-      return NULL; // Fim do arquivo
+      return NULL; // End of file
     }
     if (IS_WHITESPACE(c) && state == 0) {
-      continue; // Ignora espaços em branco
+      continue; // Ignore whitespaces
     }
-    // Implementação do DFA
+    // DFA implementation with switch cases
     switch (state) {
     case 0:
       if (isalpha(c)) {
         lexeme[lexeme_index++] = c;
-        state = 1; // Estado para identificadores ou palavras reservadas
+        state = 1; // State for identifiers and reserved words
       } else if (isdigit(c)) {
         lexeme[lexeme_index++] = c;
-        state = 2; // Estado para números
+        state = 2; // State for numbers
       } else {
-        // Verifica operadores e símbolos especiais
+        // Verifies operators and special symbols
         switch (c) {
         case '+':
           return create_token(TOKEN_PLUS, "+");
@@ -67,16 +67,16 @@ token_t *get_next_token() {
           return create_token(TOKEN_DIV, "/");
         case '<':
           state = 3;
-          break; // Pode ser < ou <=
+          break; // < or <=
         case '>':
           state = 4;
-          break; // Pode ser > ou >=
+          break; // > or >=
         case '=':
           state = 5;
-          break; // Pode ser = ou ==
+          break; // = or ==
         case '!':
           state = 6;
-          break; // Pode ser !=
+          break; // !=
         case ';':
           return create_token(TOKEN_DELIM, ";");
         case ',':
@@ -98,7 +98,7 @@ token_t *get_next_token() {
         }
       }
       break;
-    case 1: // Identificadores ou palavras reservadas
+    case 1: // Identifiers or reserved words
       if (isalnum(c)) {
         lexeme[lexeme_index++] = c;
       } else {
@@ -108,7 +108,7 @@ token_t *get_next_token() {
         return create_token(type, lexeme);
       }
       break;
-    case 2: // Números
+    case 2: // Numbers
       if (isdigit(c)) {
         lexeme[lexeme_index++] = c;
       } else {

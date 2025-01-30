@@ -95,7 +95,10 @@ unsigned int hash_function(const char *key);
 
 // ----------------------- General Helpers ----------------------
 
+//! Returns the next char of the current file
 int get_next_char();
+
+//! Tell the lexer to return one position of the file pointer
 void unget_char(int c);
 
 #endif // !LEXER_H
