@@ -13,6 +13,9 @@ hash_table_t lexer_hash_table;
 int current_line = 1;
 int current_column = 0;
 
+token_t *token_buffer[TOKEN_BUFFER_SIZE];
+int token_buffer_index = 0;
+
 void set_verbose_lexer(int is_verbose) { VERBOSE_LEXER = is_verbose; }
 
 void init_lexer(const char *file) {
@@ -31,6 +34,10 @@ void close_lexer() {
 }
 
 token_t *get_next_token() {
+  if (token_buffer_index > 0) {
+    return token_buffer[--token_buffer_index];
+  }
+
   int state = 0; // DFA initial state
   int c;
   char lexeme[LEXEME_MAX_SIZE] = {0};
@@ -152,6 +159,15 @@ token_t *get_next_token() {
     default:
       return create_token(TOKEN_UNKNOWN, (char[]){c, '\0'});
     }
+  }
+}
+
+void unget_token(token_t *token) {
+  if (token_buffer_index < TOKEN_BUFFER_SIZE) {
+    token_buffer[token_buffer_index++] = token;
+  } else {
+    fprintf(stderr, "Error: Token buffer overflow\n");
+    exit(EXIT_FAILURE);
   }
 }
 

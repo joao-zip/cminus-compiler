@@ -6,6 +6,7 @@
 #define IS_WHITESPACE(c) ((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
 #define LEXEME_MAX_SIZE 101 // 100 + \0
+#define TOKEN_BUFFER_SIZE 10
 
 extern int VERBOSE_LEXER;
 extern FILE *filename;
@@ -33,6 +34,8 @@ typedef struct {
   int column;
 } token_t;
 
+extern token_t *token_buffer[TOKEN_BUFFER_SIZE];
+extern int token_buffer_index;
 
 // ----------------------- Functions ----------------------
 
@@ -47,6 +50,9 @@ void close_lexer();
 
 //! Return the next token of the file or NULL if an error occurs or found EOF
 token_t *get_next_token();
+
+//! Returns a token to the token_buffer
+void unget_token(token_t *token);
 
 //! Creates a new token with a predetermined type and lexeme
 token_t *create_token(token_types_t type, const char *lexeme);
