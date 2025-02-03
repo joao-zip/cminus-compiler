@@ -108,6 +108,7 @@ token_t *get_next_token() {
         token_types_t type = lexer_lookup_reserved_word(lexeme);
         return create_token(type, lexeme);
       } else {
+        lexeme[lexeme_index++] = c;
         return create_token(TOKEN_UNKNOWN, lexeme);
       }
       break;
@@ -119,6 +120,7 @@ token_t *get_next_token() {
         lexeme[lexeme_index] = '\0';
         return create_token(TOKEN_NUM, lexeme);
       } else {
+        lexeme[lexeme_index++] = c;
         return create_token(TOKEN_UNKNOWN, lexeme);
       }
       break;
