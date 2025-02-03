@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   if (file_position != -1)
     init_lexer(argv[file_position]);
   else {
-    fprintf(stderr, "Error while opening file: %s\n", argv[file_position]);
+    fprintf(stderr, "Error while opening file: %s, please use the correct file extension.\n", argv[file_position]);
     return EXIT_FAILURE;
   }
 
