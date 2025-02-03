@@ -65,7 +65,8 @@ token_t *get_next_token() {
         case '*':
           return create_token(TOKEN_MULT, "*");
         case '/':
-          return create_token(TOKEN_DIV, "/");
+          state = 7;
+          break;
         case '<':
           state = 3;
           break; // < or <=
@@ -155,6 +156,21 @@ token_t *get_next_token() {
         unget_char(c);
         return create_token(TOKEN_UNKNOWN, "!");
       }
+      break;
+    case 7:
+      if (c != '*') {
+        return create_token(TOKEN_DIV, "/");
+      } else { // c == *
+        state = 8;
+        break;
+      }
+    case 8: // Inside a comment
+      if (c == '*')
+        state = 9;
+      break;
+    case 9:
+      if (c == '/')
+        state = 0;
       break;
     default:
       return create_token(TOKEN_UNKNOWN, (char[]){c, '\0'});
