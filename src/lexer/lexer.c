@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "lexer_hash.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -8,13 +9,10 @@
 int VERBOSE_LEXER = 0;
 FILE *filename = NULL;
 
-hash_table_t lexer_hash_table;
-
 int current_line = 1;
 int current_column = 0;
 
-token_t *token_buffer[TOKEN_BUFFER_SIZE];
-int token_buffer_index = 0;
+// ----------------------- Functions ----------------------
 
 void set_verbose_lexer(int is_verbose) { VERBOSE_LEXER = is_verbose; }
 
@@ -34,10 +32,6 @@ void close_lexer() {
 }
 
 token_t *get_next_token() {
-  if (token_buffer_index > 0) {
-    return token_buffer[--token_buffer_index];
-  }
-
   int state = 0; // DFA initial state
   int c;
   char lexeme[LEXEME_MAX_SIZE] = {0};
@@ -106,22 +100,26 @@ token_t *get_next_token() {
       }
       break;
     case 1: // Identifiers or reserved words
-      if (isalnum(c)) {
+      if (isalpha(c)) {
         lexeme[lexeme_index++] = c;
-      } else {
+      } else if (IS_ID_SEPARATOR(c)) {
         unget_char(c);
         lexeme[lexeme_index] = '\0';
         token_types_t type = lexer_lookup_reserved_word(lexeme);
         return create_token(type, lexeme);
+      } else {
+        return create_token(TOKEN_UNKNOWN, lexeme);
       }
       break;
     case 2: // Numbers
       if (isdigit(c)) {
         lexeme[lexeme_index++] = c;
-      } else {
+      } else if (IS_NUM_SEPARATOR(c)) {
         unget_char(c);
         lexeme[lexeme_index] = '\0';
         return create_token(TOKEN_NUM, lexeme);
+      } else {
+        return create_token(TOKEN_UNKNOWN, lexeme);
       }
       break;
     case 3: // < or <=
@@ -162,15 +160,6 @@ token_t *get_next_token() {
   }
 }
 
-void unget_token(token_t *token) {
-  if (token_buffer_index < TOKEN_BUFFER_SIZE) {
-    token_buffer[token_buffer_index++] = token;
-  } else {
-    fprintf(stderr, "Error: Token buffer overflow\n");
-    exit(EXIT_FAILURE);
-  }
-}
-
 token_t *create_token(token_types_t type, const char *lexeme) {
   token_t *token = (token_t *)malloc(sizeof(token_t));
   token->type = type;
@@ -182,8 +171,10 @@ token_t *create_token(token_types_t type, const char *lexeme) {
   if (VERBOSE_LEXER)
     print_token(token);
 
-  if (token->type == TOKEN_UNKNOWN)
+  if (token->type == TOKEN_UNKNOWN) {
     print_error(token);
+    exit(EXIT_FAILURE);
+  }
 
   return token;
 }
@@ -267,75 +258,11 @@ void print_token(token_t *token) {
 }
 
 void print_error(token_t *token) {
-  printf("ERRO LEXICO: \"%s\" INVALIDO [linha: %d], COLUNA %d\n", token->lexeme,
+  printf("\033[31mERRO LEXICO: \"%s\" INVALIDO [linha: %d], COLUNA %d\n\033[0m", token->lexeme,
          token->line, token->column);
 }
 
-// HASH SECTION
-
-void lexer_hash_init() {
-
-  // Initializes every table(bucket) as NULL
-  for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-    lexer_hash_table.table[i] = NULL;
-  }
-
-  const char *reserved_words[] = {"else",   "if",   "int",
-                                  "return", "void", "while"};
-  token_types_t token_types[] = {TOKEN_ELSE,   TOKEN_IF,   TOKEN_INT,
-                                 TOKEN_RETURN, TOKEN_VOID, TOKEN_WHILE};
-
-  // Inserts each word in the table
-  for (int i = 0; i < sizeof(reserved_words) / sizeof(reserved_words[0]); i++) {
-    unsigned int index = hash_function(reserved_words[i]);
-    hash_node_t *new_node = (hash_node_t *)malloc(sizeof(hash_node_t));
-
-    new_node->key = strdup(reserved_words[i]);
-    new_node->type = token_types[i];
-    new_node->next = lexer_hash_table.table[index];
-
-    lexer_hash_table.table[index] = new_node;
-  }
-}
-
-void lexer_hash_delete() {
-  for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-    hash_node_t *node = lexer_hash_table.table[i];
-    while (node != NULL) {
-      hash_node_t *temp = node;
-      node = node->next;
-      free(temp->key);
-      free(temp);
-    }
-  }
-}
-
-token_types_t lexer_lookup_reserved_word(const char *key) {
-  unsigned int index = hash_function(key);
-  hash_node_t *node = lexer_hash_table.table[index];
-
-  while (node != NULL) {
-    if (strcmp(node->key, key) == 0)
-      return node->type;
-
-    node = node->next;
-  }
-
-  // Returns id if it isn't on the reserved words set
-  return TOKEN_ID;
-}
-
-unsigned int hash_function(const char *key) {
-  unsigned int hash = 0;
-  while (*key) {
-    hash = (hash * 31) + *key;
-    key++;
-  }
-
-  return hash % HASH_TABLE_SIZE;
-}
-
-// HELPER Functions
+// ----------------------- General Helpers ----------------------
 
 int get_next_char() {
   int c = fgetc(filename);
