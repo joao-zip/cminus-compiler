@@ -1,10 +1,12 @@
 #include "parser.h"
 #include "../lexer/lexer.h"
+#include "ast_printer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 token_t *currentToken = NULL;
+int VERBOSE_PARSER = 0;
 
 ast_node_t *create_ast_node(ast_node_type_t type) {
   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
@@ -174,6 +176,10 @@ void match_token(token_types_t expected) {
   }
 }
 
+void set_verbose_parser(int is_verbose) {
+  VERBOSE_PARSER = is_verbose;
+}
+
 void parser_print_error() {
   fprintf(
       stderr,
@@ -191,6 +197,9 @@ ast_node_t *parse_program() {
 
   ast_node_t *program = create_ast_node(AST_PROGRAM);
   program->data.program.decl_list = parse_declaration_list();
+
+  if (VERBOSE_PARSER)
+    print_ast(program);
 
   return program;
 }

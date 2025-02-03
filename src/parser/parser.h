@@ -6,6 +6,9 @@
 //! Pointer to the current token
 extern token_t *currentToken;
 
+//! Global controller to print the ASTree after sintatic analysis
+extern int VERBOSE_PARSER;
+
 // ----------------------- Abstract Syntax Tree (AST) Structures ----------------------
 
 //! Enumeration for AST node types
@@ -228,6 +231,9 @@ void destroy_ast(ast_node_t *node);
 void destroy_ast_root(ast_node_t *root);
 
 // ----------------------- Parser Functions ----------------------
+
+//! Sets the option to print the tree after the sintatic analysis
+void set_verbose_parser(int is_verbose);
 
 //! Parser default error
 void parser_print_error();
